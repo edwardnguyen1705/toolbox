@@ -8,7 +8,6 @@ import math
 import imgaug.augmenters as iaa
 import torch
 
-from utils.utils import get_rotated_coors
 
 
 class HSV(object):
@@ -24,6 +23,7 @@ class HSV(object):
             V = img_hsv[:, :, 2].astype(np.float32)  # value
             a = random.uniform(-1, 1) * self.saturation + 1
             b = random.uniform(-1, 1) * self.brightness + 1
+            print(b)
             S *= a
             V *= b
             img_hsv[:, :, 1] = S if a < 1 else S.clip(None, 255)
@@ -418,45 +418,27 @@ def generate_label(M,label):
 
 
 
-# # ---------------------
-# def get_rotated_coors(box):
-#         assert len(box) > 0 , 'Input valid box!'
-#         cx = box[0]; cy = box[1]; w = box[2]; h = box[3]; a = box[4]
-#         xmin = cx - w*0.5; xmax = cx + w*0.5; ymin = cy - h*0.5; ymax = cy + h*0.5
-#         t_x0=xmin; t_y0=ymin; t_x1=xmin; t_y1=ymax; t_x2=xmax; t_y2=ymax; t_x3=xmax; t_y3=ymin
-#         R = np.eye(3)
-#         R[:2] = cv2.getRotationMatrix2D(angle=-a*180/math.pi, center=(cx,cy), scale=1)
-#         x0 = t_x0*R[0,0] + t_y0*R[0,1] + R[0,2] 
-#         y0 = t_x0*R[1,0] + t_y0*R[1,1] + R[1,2] 
-#         x1 = t_x1*R[0,0] + t_y1*R[0,1] + R[0,2] 
-#         y1 = t_x1*R[1,0] + t_y1*R[1,1] + R[1,2] 
-#         x2 = t_x2*R[0,0] + t_y2*R[0,1] + R[0,2] 
-#         y2 = t_x2*R[1,0] + t_y2*R[1,1] + R[1,2] 
-#         x3 = t_x3*R[0,0] + t_y3*R[0,1] + R[0,2] 
-#         y3 = t_x3*R[1,0] + t_y3*R[1,1] + R[1,2] 
-#         if isinstance(x0,torch.Tensor):
-#             r_box=torch.cat([x0.unsqueeze(0),y0.unsqueeze(0),
-#                             x1.unsqueeze(0),y1.unsqueeze(0),
-#                             x2.unsqueeze(0),y2.unsqueeze(0),
-#                             x3.unsqueeze(0),y3.unsqueeze(0)], 0)
-#         else:
-#             r_box = np.array([x0,y0,x1,y1,x2,y2,x3,y3])
-#         return r_box
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
     
 
-#     path = '/py/datasets/HRSC2016/yolo-dataset/train'
-#     img_files = os.listdir(path)
-#     img_files = [i for i in img_files if i.endswith('jpg')]
-#     for img_file in img_files:
-#         img = cv2.imread(os.path.join(path,img_file),1)
-#         labels = np.loadtxt(os.path.join(path,img_file)[:-4]+'.txt')
-#         if len(labels.shape)<2:
-#             labels = np.array([labels])
-#         labels[:,[1,3]] *= img.shape[1]
-#         labels[:,[2,4]] *= img.shape[0]
+    im_path = '/py/datasets/ICDAR13/val/images/img_42.jpg'
+    hsv = HSV(0.5, 0.5, p=1)
+    blur = Blur(4.0, p=1)
+    gray = Grayscale(0.5, p=1)
+    gamma = Gamma(0.2, p=1)
+    noisy = Noise(0.1, p=1)
+    sharpen = Sharpen(0.3, p=1)
+    contrast = Contrast(0.5, p=1)
+    hflip = HorizontalFlip(p=1)
+    vflip = VerticalFlip(p=1)
 
-#         cp = CopyPaste(sigma= 0.1)
-#         cp(img,labels)
+
+    img = cv2.imread(im_path)
+    aug_img, _ = hsv(img.copy(), None)
+    cv2.imshow('aug', aug_img)
+    cv2.imshow('src', img)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
