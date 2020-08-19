@@ -15,6 +15,12 @@ Coordinate information of points is read from annotation files such as XML
 2. Save results or just display
 3. Related drawing properties
 
+## Support Datasets
+* HRSC2016
+* ICDAR15
+* ICDAR13
+* DOTA
+* other xml format, and yolo format
 
 ## Result
 Applying the transformation of crop and affine on DOTA pictures, the transformation coordinates were mapped to get the following bbox results:

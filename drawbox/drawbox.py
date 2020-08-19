@@ -136,18 +136,24 @@ def get_DOTA_points(label_path, rotate=False):
 
 
 # for ICDAR style（四点八坐标txt格式）
-def get_ICDAR_points(label_path,rotate=False):
+def get_ICDAR_points(label_path,rotate=False, year='15'):
     with open(label_path,'r',encoding='UTF-8-sig') as f:        
         contents=f.read()
         lines=contents.split('\n')
         lines = [x for x in contents.split('\n')  if x]	 # 移除空格
 
-        object_coors=[]	# coor内一个元素是一个物体，含四个点8坐标
+        object_coors=[]	# coor内一个元素是一个物体，含四个点8坐标(for 15)
         for object in lines:
-            coors = object.split(',')
-            x0 = coors[0]; y0 = coors[1]; x1 = coors[2]; y1 = coors[3]
-            x2 = coors[4]; y2 = coors[5]; x3 = coors[6]; y3 = coors[7]
-            object_coors.append(np.array([x0,y0,x1,y1,x2,y2,x3,y3]).reshape(4,2).astype(np.int32))
+            if year == '15':
+                coors = object.split(',')
+                x0 = coors[0]; y0 = coors[1]; x1 = coors[2]; y1 = coors[3]
+                x2 = coors[4]; y2 = coors[5]; x3 = coors[6]; y3 = coors[7]
+                object_coors.append(np.array([x0,y0,x1,y1,x2,y2,x3,y3]).reshape(4,2).astype(np.int32))
+            elif year == '13':
+                coors = object.split(' ')
+                x0 = coors[0]; y0 = coors[1]; x1 = coors[0]; y1 = coors[3]
+                x2 = coors[2]; y2 = coors[3]; x3 = coors[2]; y3 = coors[1]
+                object_coors.append(np.array([x0,y0,x1,y1,x2,y2,x3,y3]).reshape(4,2).astype(np.int32))
     return object_coors  
 
 
@@ -221,8 +227,8 @@ if __name__ == "__main__":
     # save_path = '/py/datasets/ship/tiny_ships/yolo_ship/single_class/train_imgs'
     
     # 注意：如果是yolo，img和label放到一个文件夹下，并且路径设置也要一样
-    img_path = r'C:/Users/xiaoming/Desktop/5.jpg'
-    label_path = '/py/BoxesCascade/ICDAR15/train_label/gt_img_34.txt' #34
+    img_path   = '/py/datasets/ICDAR13/train/images'
+    label_path = '/py/datasets/ICDAR13/train/labels' 
     func = get_ICDAR_points
     
     
@@ -239,7 +245,7 @@ if __name__ == "__main__":
             # 选择label的模式
             # object_coors = get_yolo_points(os.path.join(label_path,iter[1]), rotate=True)
             if not iter[0].endswith('.txt'):
-                object_coors = func(os.path.join(label_path,iter[1]),True)
+                object_coors = func(os.path.join(label_path,iter[1]),rotate=True,year='13')
                 if len(object_coors):
                     drawbox(os.path.join(img_path,iter[0]),object_coors)
                 else:
