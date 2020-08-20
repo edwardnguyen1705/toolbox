@@ -3,6 +3,7 @@ import cv2
 import os
 import ipdb
 import math
+import xml.etree.ElementTree as ET
 
 # pts=np.array([[203,708],[211,704],[229,720],[221,727]])
 # stable:
@@ -12,6 +13,7 @@ import math
 # 本部分自定义，输入单个xml文件，返回文件中所有物体的bbox坐标点的list
 # list下每个元素为一个物体，是numpy数组
 # return的四个点顺时针逆时针都可以，但是别调对角线
+
 
 
 def get_HRSCplus_points(label_path,rotate=False):
@@ -60,7 +62,6 @@ def get_xml_points(label_path, rotate=False):
         contents=f.read()
         objects=contents.split('<object>')	
         objects.pop(0)
-
         object_coors=[]	# coor内一个元素是一个物体，含四个点8坐标
         for object in objects:
             x0 = object[object.find('<xmin>')+6 : object.find('</xmin>')]
@@ -72,6 +73,29 @@ def get_xml_points(label_path, rotate=False):
             x3 = object[object.find('<xmax>')+6 : object.find('</xmax>')]
             y3 = object[object.find('<ymin>')+6 : object.find('</ymin>')]
             object_coors.append(np.array([x0,y0,x1,y1,x2,y2,x3,y3]).reshape(4,2).astype(np.int32))
+    return object_coors  
+
+
+# 提供一种比str分割更elegant的xml文件提取方法
+def get_xml_points_v2(label_path,rotate=False):
+    tree = ET.parse(label_path)
+    objs = tree.findall('object')
+    boxes, gt_classes = [], []
+    object_coors=[]	# coor内一个元素是一个物体，含四个点8坐标
+    for _, obj in enumerate(objs):
+        difficult = int(obj.find('difficult').text)
+        bnd_box = obj.find('bndbox')
+        box = [
+            float(bnd_box.find('xmin').text),
+            float(bnd_box.find('ymin').text),
+            float(bnd_box.find('xmax').text),
+            float(bnd_box.find('ymin').text),
+            float(bnd_box.find('xmax').text),
+            float(bnd_box.find('ymax').text),
+            float(bnd_box.find('xmin').text),
+            float(bnd_box.find('ymax').text),
+        ]
+        object_coors.append(np.array(box).reshape(4,2).astype(np.int32))
     return object_coors  
 
 
@@ -227,9 +251,9 @@ if __name__ == "__main__":
     # save_path = '/py/datasets/ship/tiny_ships/yolo_ship/single_class/train_imgs'
     
     # 注意：如果是yolo，img和label放到一个文件夹下，并且路径设置也要一样
-    img_path   = '/py/datasets/ICDAR13/train/images'
-    label_path = '/py/datasets/ICDAR13/train/labels' 
-    func = get_ICDAR_points
+    img_path   = '/py/datasets/VOCdevkit/VOC2007/JPEGImages'
+    label_path = '/py/datasets/VOCdevkit/VOC2007/Annotations' 
+    func = get_xml_points_v2
     
     
     # for folder
@@ -245,7 +269,7 @@ if __name__ == "__main__":
             # 选择label的模式
             # object_coors = get_yolo_points(os.path.join(label_path,iter[1]), rotate=True)
             if not iter[0].endswith('.txt'):
-                object_coors = func(os.path.join(label_path,iter[1]),rotate=True,year='13')
+                object_coors = func(os.path.join(label_path,iter[1]))
                 if len(object_coors):
                     drawbox(os.path.join(img_path,iter[0]),object_coors)
                 else:
